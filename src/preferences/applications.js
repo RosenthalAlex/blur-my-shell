@@ -54,6 +54,7 @@ export const Applications = GObject.registerClass({
         'window_border',
         'window_border_width',
         'window_border_color',
+        'window_border_round_corners',
         'window_border_corner_radius',
         'window_border_show_when_maximized'
     ],
@@ -129,6 +130,10 @@ export const Applications = GObject.registerClass({
         );
         window_border.settings.bind(
             'width', this._window_border_width, 'value',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+        window_border.settings.bind(
+            'round-corners', this._window_border_round_corners, 'active',
             Gio.SettingsBindFlags.DEFAULT
         );
         window_border.settings.bind(

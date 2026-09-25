@@ -93,6 +93,7 @@ export const KEYS = [
             { type: Type.B, name: "enabled" },
             { type: Type.I, name: "width" },
             { type: Type.C, name: "color" },
+            { type: Type.B, name: "round-corners" },
             { type: Type.I, name: "corner-radius" },
             { type: Type.B, name: "show-when-maximized" },
         ]

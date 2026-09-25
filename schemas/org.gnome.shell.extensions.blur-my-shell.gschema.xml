@@ -726,17 +726,22 @@
         <!-- WIDTH -->
         <key type="i" name="width">
             <default>1</default>
-            <summary>Width of the window border, in pixels</summary>
+            <summary>Width of the window border, in pixels (0 for no border)</summary>
         </key>
         <!-- COLOR -->
         <key type="(dddd)" name="color">
             <default>(1.,1.,1.,0.15)</default>
             <summary>Color of the window border, as red, green, blue and alpha between 0 and 1</summary>
         </key>
+        <!-- ROUND CORNERS -->
+        <key type="b" name="round-corners">
+            <default>true</default>
+            <summary>Boolean, whether to round the corners of the window content to the same shape as the border</summary>
+        </key>
         <!-- CORNER RADIUS -->
         <key type="i" name="corner-radius">
             <default>12</default>
-            <summary>Corner radius of the window border, used when the window's blur does not give one</summary>
+            <summary>Corner radius of the window border and content, used when the window's blur does not give one</summary>
         </key>
         <!-- SHOW WHEN MAXIMIZED -->
         <key type="b" name="show-when-maximized">

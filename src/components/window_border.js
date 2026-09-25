@@ -3,9 +3,15 @@ import Meta from 'gi://Meta';
 import St from 'gi://St';
 import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 
+import { WindowCornersEffect } from './window_corners_effect.js';
+
 
 const BORDER_ACTOR_NAME = 'bms-window-border';
 const BLUR_ACTOR_NAME = 'bms-application-blurred-widget';
+const CORNERS_EFFECT_NAME = 'bms-window-corners';
+
+// our own actors inside a window actor; anything else is the window content
+const BMS_ACTOR_NAMES = [BORDER_ACTOR_NAME, BLUR_ACTOR_NAME];
 
 const BORDERED_FRAME_TYPES = [
     Meta.FrameType.NORMAL,
@@ -14,7 +20,8 @@ const BORDERED_FRAME_TYPES = [
 ];
 
 
-/// Draws a border around every application window, blurred or not.
+/// Draws a border around every application window, blurred or not, and
+/// rounds the corners of the window content to the same shape.
 ///
 /// The border is a plain `St.Widget` with a CSS border, added on top of the
 /// window's content inside its window actor. Unlike a shader effect it never
@@ -25,6 +32,9 @@ const BORDERED_FRAME_TYPES = [
 /// geometry and corner radius, which other extensions (e.g. Rounded Window
 /// Corners) may fit to their own window shape. Otherwise it follows the
 /// window's frame rect, with the corner radius from the preferences.
+///
+/// The corners are rounded by a shader on the window's content actor (the
+/// surface container), never on the window actor, which also holds the blur.
 export const WindowBorder = class WindowBorder {
     constructor(connections, settings, _) {
         this.connections = connections;
@@ -109,6 +119,7 @@ export const WindowBorder = class WindowBorder {
             return;
 
         this.clear_pending_update(meta_window);
+        this.remove_corners(meta_window);
 
         this.connections.disconnect_all_for(meta_window);
         const window_actor = meta_window.get_compositor_private();
@@ -164,20 +175,15 @@ export const WindowBorder = class WindowBorder {
             || meta_window.maximized_vertically
             || meta_window.fullscreen;
 
-        if (
-            prefs.WIDTH <= 0
-            || !BORDERED_FRAME_TYPES.includes(meta_window.get_frame_type())
-            || (is_maximized && !prefs.SHOW_WHEN_MAXIMIZED)
-        ) {
-            border.hide();
-            return;
+        let shape = null;
+        if (BORDERED_FRAME_TYPES.includes(meta_window.get_frame_type())) {
+            const blur_actor = this.follow_blur_actor(meta_window, window_actor);
+            shape = (blur_actor && this.blur_shape(blur_actor))
+                ?? this.frame_shape(meta_window);
         }
-
-        const blur_actor = this.follow_blur_actor(meta_window, window_actor);
-        const shape = (blur_actor && this.blur_shape(blur_actor))
-            ?? this.frame_shape(meta_window);
-        if (shape.width <= 0 || shape.height <= 0) {
+        if (!shape || shape.width <= 0 || shape.height <= 0) {
             border.hide();
+            this.update_corners(meta_window, window_actor, null, 0);
             return;
         }
 
@@ -188,6 +194,16 @@ export const WindowBorder = class WindowBorder {
             radius = is_maximized && !this.settings.applications.CORNER_WHEN_MAXIMIZED
                 ? 0
                 : prefs.CORNER_RADIUS;
+        }
+
+        // content corners, matching the border and the blur
+        this.update_corners(
+            meta_window, window_actor, prefs.ROUND_CORNERS ? shape : null, radius
+        );
+
+        if (prefs.WIDTH <= 0 || (is_maximized && !prefs.SHOW_WHEN_MAXIMIZED)) {
+            border.hide();
+            return;
         }
 
         border.set_position(shape.x, shape.y);
@@ -201,6 +217,57 @@ export const WindowBorder = class WindowBorder {
             border.style = style;
 
         border.show();
+    }
+
+    /// Rounds the window content to `shape` (window actor coordinates) with
+    /// `radius` (unscaled, like CSS pixels), or stops rounding it when `shape`
+    /// is null or the radius is 0.
+    update_corners(meta_window, window_actor, shape, radius) {
+        const content = window_actor.get_children().find(
+            child => !BMS_ACTOR_NAMES.includes(child.name)
+        ) ?? null;
+
+        // the content actor can be replaced during the window's life
+        if (meta_window._bms_corners_target !== content)
+            this.remove_corners(meta_window);
+
+        const theme_scale = St.ThemeContext.get_for_stage(global.stage).scale_factor || 1;
+        const scaled_radius = radius * theme_scale;
+        if (!content || !shape || scaled_radius < 1) {
+            this.remove_corners(meta_window);
+            return;
+        }
+
+        let effect = content.get_effect(CORNERS_EFFECT_NAME);
+        if (!effect) {
+            effect = new WindowCornersEffect();
+            content.add_effect_with_name(CORNERS_EFFECT_NAME, effect);
+            meta_window._bms_corners_target = content;
+
+            // the effect maps its bounds through the content's size
+            this.connections.connect(
+                content, 'notify::size',
+                _ => this.schedule_update(meta_window)
+            );
+        }
+
+        const x = shape.x - content.x;
+        const y = shape.y - content.y;
+        effect.set_shape([x, y, x + shape.width, y + shape.height], scaled_radius);
+    }
+
+    remove_corners(meta_window) {
+        const content = meta_window._bms_corners_target;
+        if (!content)
+            return;
+
+        delete meta_window._bms_corners_target;
+        this.connections.disconnect_all_for(content);
+        try {
+            content.remove_effect_by_name(CORNERS_EFFECT_NAME);
+        } catch (e) {
+            // the content actor is already gone
+        }
     }
 
     /// Finds the application blur actor of the window (if any), and makes sure

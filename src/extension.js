@@ -743,7 +743,7 @@ export default class BlurMyShell extends Extension {
 
         // border look changed
         [
-            'WIDTH', 'COLOR', 'CORNER_RADIUS', 'SHOW_WHEN_MAXIMIZED'
+            'WIDTH', 'COLOR', 'ROUND_CORNERS', 'CORNER_RADIUS', 'SHOW_WHEN_MAXIMIZED'
         ].forEach(key => this._settings.window_border[`${key}_changed`](() => {
             if (this._settings.window_border.ENABLED)
                 this._window_border.update_all();
