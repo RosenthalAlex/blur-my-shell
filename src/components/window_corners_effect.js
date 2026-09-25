@@ -3,20 +3,30 @@ import GObject from 'gi://GObject';
 import Shell from 'gi://Shell';
 
 
-// Rounds the corners of the window's visible frame. Pixels outside the frame
-// (e.g. a client-side shadow) are left untouched, and so is everything inside
-// the frame except its corners.
+// Rounds the corners of the window's visible frame. Around each corner, a thin
+// band just outside the frame is cut too: apps often draw a square outline or
+// edge there, which would otherwise stick out of the rounding. The rest of the
+// area outside the frame (the client-side shadow) and the frame's straight
+// edges are left untouched.
 const DECLARATIONS = `
 uniform vec4 bounds;
 uniform float radius;
+uniform float band;
 uniform vec2 pixel_step;
 
 float corner_alpha(vec2 p) {
-    if (p.x < bounds.x || p.x > bounds.z || p.y < bounds.y || p.y > bounds.w)
+    // how far outside the frame (0 inside it)
+    vec2 outside = max(max(bounds.xy - p, p - bounds.zw), vec2(0.0));
+    if (max(outside.x, outside.y) > band)
         return 1.0;
 
+    // only the corner squares: along the straight edges d has a 0 component
     vec2 center = clamp(p, bounds.xy + radius, bounds.zw - radius);
-    return clamp(radius - distance(p, center) + 0.5, 0.0, 1.0);
+    vec2 d = abs(p - center);
+    if (min(d.x, d.y) == 0.0)
+        return 1.0;
+
+    return clamp(radius - length(d) + 0.5, 0.0, 1.0);
 }
 `;
 
@@ -37,13 +47,15 @@ export const WindowCornersEffect = GObject.registerClass({
         this.add_glsl_snippet(Cogl.SnippetHook.FRAGMENT, DECLARATIONS, CODE, false);
     }
 
-    /// `bounds`: [x1, y1, x2, y2] of the visible frame and `radius` of its
-    /// corners, in the actor's coordinates (logical pixels).
-    set_shape(bounds, radius) {
+    /// `bounds`: [x1, y1, x2, y2] of the visible frame, `radius` of its
+    /// corners and width of the `band` cut around them outside the frame, in
+    /// the actor's coordinates (logical pixels).
+    set_shape(bounds, radius, band) {
         if (!this._uniforms) {
             this._uniforms = {
                 bounds: this.get_uniform_location('bounds'),
                 radius: this.get_uniform_location('radius'),
+                band: this.get_uniform_location('band'),
                 pixel_step: this.get_uniform_location('pixel_step'),
             };
         }
@@ -56,6 +68,7 @@ export const WindowCornersEffect = GObject.registerClass({
 
         this.set_uniform_float(this._uniforms.bounds, 4, bounds);
         this.set_uniform_float(this._uniforms.radius, 1, [Math.min(radius, max_radius)]);
+        this.set_uniform_float(this._uniforms.band, 1, [band]);
         this.set_uniform_float(this._uniforms.pixel_step, 2, [1 / width, 1 / height]);
         this.queue_repaint();
     }
