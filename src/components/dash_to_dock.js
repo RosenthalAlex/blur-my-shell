@@ -425,8 +425,10 @@ export const DashBlur = class DashBlur extends Signals.EventEmitter {
             _ => this.update_size()
         );
 
+        // Dash-to-Dock's slider is a GObject; docks imitating Dash-to-Dock
+        // (e.g. Dash2Dock Animated) may provide a plain JS stand-in instead
         const slider = dash_container._slider;
-        if (slider) {
+        if (slider && typeof slider.connect === 'function') {
             this.connections.connect(
                 slider,
                 ['notify::slide-x', 'notify::allocation'],
