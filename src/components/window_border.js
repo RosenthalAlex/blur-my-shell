@@ -172,11 +172,16 @@ export const WindowBorder = class WindowBorder {
 
         const prefs = this.settings.window_border;
         const is_maximized = meta_window.maximized_horizontally
-            || meta_window.maximized_vertically
-            || meta_window.fullscreen;
+            || meta_window.maximized_vertically;
 
+        // Fullscreen windows (games, videos) are always left alone: no rounded
+        // corners, no border. The corners effect would also prevent their
+        // direct scanout.
         let shape = null;
-        if (BORDERED_FRAME_TYPES.includes(meta_window.get_frame_type())) {
+        if (
+            !meta_window.fullscreen
+            && BORDERED_FRAME_TYPES.includes(meta_window.get_frame_type())
+        ) {
             const blur_actor = this.follow_blur_actor(meta_window, window_actor);
             shape = (blur_actor && this.blur_shape(blur_actor))
                 ?? this.frame_shape(meta_window);
@@ -188,7 +193,7 @@ export const WindowBorder = class WindowBorder {
         }
 
         // a blurred window gives its blur's radius, which already accounts for
-        // maximized/fullscreen windows (and for Rounded Window Corners)
+        // maximized windows (and for Rounded Window Corners)
         let radius = shape.radius;
         if (radius === undefined) {
             radius = is_maximized && !this.settings.applications.CORNER_WHEN_MAXIMIZED

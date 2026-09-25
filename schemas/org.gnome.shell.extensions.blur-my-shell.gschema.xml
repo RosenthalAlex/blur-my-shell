@@ -746,7 +746,7 @@
         <!-- SHOW WHEN MAXIMIZED -->
         <key type="b" name="show-when-maximized">
             <default>false</default>
-            <summary>Boolean, whether to keep the border on maximized and fullscreen windows</summary>
+            <summary>Boolean, whether to keep the border on maximized windows (fullscreen windows never get one)</summary>
         </key>
     </schema>
 </schemalist>
