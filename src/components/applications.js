@@ -497,7 +497,10 @@ export const ApplicationsBlur = class ApplicationsBlur {
     /// Set the opacity of the window actor that sits on top of the blur effect.
     set_window_opacity(window_actor, opacity) {
         // Define known blur actor names. This makes it easy to update if names change again.
-        const BLUR_ACTOR_NAMES = new Set(["blur-actor", "bms-application-blurred-widget"]);
+        // (the window border is ours too, and stays fully opaque)
+        const BLUR_ACTOR_NAMES = new Set([
+            "blur-actor", "bms-application-blurred-widget", "bms-window-border"
+        ]);
 
         window_actor?.get_children().forEach(child => {
             // Check against the Set and the opacity

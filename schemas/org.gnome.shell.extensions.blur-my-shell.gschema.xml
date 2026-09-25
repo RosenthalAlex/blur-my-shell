@@ -107,6 +107,7 @@
         <child name='popup' schema='org.gnome.shell.extensions.blur-my-shell.popup'></child>
         <child name='hidetopbar' schema='org.gnome.shell.extensions.blur-my-shell.hidetopbar'></child>
         <child name='dash-to-panel' schema='org.gnome.shell.extensions.blur-my-shell.dash-to-panel'></child>
+        <child name='window-border' schema='org.gnome.shell.extensions.blur-my-shell.window-border'></child>
     </schema>
 
     <!-- OVERVIEW -->
@@ -711,6 +712,36 @@
         <key type="b" name="blur-original-panel">
             <default>true</default>
             <summary>Boolean, whether to blur the original panel (if option selected) with Dash to Panel</summary>
+        </key>
+    </schema>
+
+    <!-- WINDOW BORDER -->
+    <schema id="org.gnome.shell.extensions.blur-my-shell.window-border"
+        path="/org/gnome/shell/extensions/blur-my-shell/window-border/">
+        <!-- ENABLED -->
+        <key type="b" name="enabled">
+            <default>false</default>
+            <summary>Boolean, whether to draw a border around every application window</summary>
+        </key>
+        <!-- WIDTH -->
+        <key type="i" name="width">
+            <default>1</default>
+            <summary>Width of the window border, in pixels</summary>
+        </key>
+        <!-- COLOR -->
+        <key type="(dddd)" name="color">
+            <default>(1.,1.,1.,0.15)</default>
+            <summary>Color of the window border, as red, green, blue and alpha between 0 and 1</summary>
+        </key>
+        <!-- CORNER RADIUS -->
+        <key type="i" name="corner-radius">
+            <default>12</default>
+            <summary>Corner radius of the window border, used when the window's blur does not give one</summary>
+        </key>
+        <!-- SHOW WHEN MAXIMIZED -->
+        <key type="b" name="show-when-maximized">
+            <default>false</default>
+            <summary>Boolean, whether to keep the border on maximized and fullscreen windows</summary>
         </key>
     </schema>
 </schemalist>

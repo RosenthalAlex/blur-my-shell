@@ -89,6 +89,15 @@ export const KEYS = [
         ]
     },
     {
+        component: "window-border", schemas: [
+            { type: Type.B, name: "enabled" },
+            { type: Type.I, name: "width" },
+            { type: Type.C, name: "color" },
+            { type: Type.I, name: "corner-radius" },
+            { type: Type.B, name: "show-when-maximized" },
+        ]
+    },
+    {
         component: "coverflow-alt-tab", schemas: [
             { type: Type.B, name: "blur" },
             { type: Type.S, name: "pipeline" },

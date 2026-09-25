@@ -50,7 +50,12 @@ export const Applications = GObject.registerClass({
         'whitelist',
         'add_window_whitelist',
         'blacklist',
-        'add_window_blacklist'
+        'add_window_blacklist',
+        'window_border',
+        'window_border_width',
+        'window_border_color',
+        'window_border_corner_radius',
+        'window_border_show_when_maximized'
     ],
 }, class Applications extends Adw.PreferencesPage {
     constructor(preferences, preferences_window, pipelines_manager, pipelines_page) {
@@ -115,6 +120,37 @@ export const Applications = GObject.registerClass({
             'corner-when-maximized', this._corner_when_maximized, 'active',
             Gio.SettingsBindFlags.DEFAULT
         );
+
+        // window border
+        const window_border = this.preferences.window_border;
+        window_border.settings.bind(
+            'enabled', this._window_border, 'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+        window_border.settings.bind(
+            'width', this._window_border_width, 'value',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+        window_border.settings.bind(
+            'corner-radius', this._window_border_corner_radius, 'value',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+        window_border.settings.bind(
+            'show-when-maximized', this._window_border_show_when_maximized, 'active',
+            Gio.SettingsBindFlags.DEFAULT
+        );
+
+        const update_border_color_button = () => {
+            const rgba = this._window_border_color.get_rgba().copy();
+            [rgba.red, rgba.green, rgba.blue, rgba.alpha] = window_border.COLOR;
+            this._window_border_color.set_rgba(rgba);
+        };
+        update_border_color_button();
+        window_border.COLOR_changed(update_border_color_button);
+        this._window_border_color.connect('color-set', () => {
+            const rgba = this._window_border_color.get_rgba();
+            window_border.COLOR = [rgba.red, rgba.green, rgba.blue, rgba.alpha];
+        });
 
         // connect 'enable all' button to whitelist/blacklist visibility
         this._enable_all.bind_property(

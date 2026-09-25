@@ -22,6 +22,7 @@ import { CoverflowAltTabBlur } from './components/coverflow_alt_tab.js';
 import { ApplicationsBlur } from './components/applications.js';
 import { ScreenshotBlur } from './components/screenshot.js';
 import { PopupBlur } from './components/popup.js';
+import { WindowBorder } from './components/window_border.js';
 import { NativeDynamicBlurEffect } from './effects/native_dynamic_gaussian_blur.js';
 
 
@@ -75,6 +76,7 @@ export default class BlurMyShell extends Extension {
         this._applications_blur = new ApplicationsBlur(...init());
         this._screenshot_blur = new ScreenshotBlur(...init());
         this._popup = new PopupBlur(...init());
+        this._window_border = new WindowBorder(...init());
 
         // connect each component to preferences change
         this._connect_to_settings();
@@ -185,6 +187,7 @@ export default class BlurMyShell extends Extension {
         this._applications_blur = null;
         this._screenshot_blur = null;
         this._popup = null;
+        this._window_border = null;
 
         this._effects_manager.destroy_all();
         this._pipelines_manager.destroy();
@@ -224,6 +227,7 @@ export default class BlurMyShell extends Extension {
         this._run_component_step('_coverflow_alt_tab_blur disable', () => this._coverflow_alt_tab_blur.disable());
         this._run_component_step('_applications_blur disable', () => this._applications_blur.disable());
         this._run_component_step('_screenshot_blur disable', () => this._screenshot_blur.disable());
+        this._run_component_step('_window_border disable', () => this._window_border.disable());
 
         // remove the clipped redraws flag
         this._reenable_clipped_redraws();
@@ -349,6 +353,9 @@ export default class BlurMyShell extends Extension {
 
         if (this._settings.popup.BLUR)
             this._run_component_step('_popup enable', () => this._popup.enable());
+
+        if (this._settings.window_border.ENABLED && !this._window_border.enabled)
+            this._run_component_step('_window_border enable', () => this._window_border.enable());
 
         this._log("all components enabled.");
     }
@@ -722,6 +729,25 @@ export default class BlurMyShell extends Extension {
             if (this._settings.popup.BLUR)
                 this._popup.update_background();
         });
+
+
+        // ---------- WINDOW BORDER ----------
+
+        // toggled on/off
+        this._settings.window_border.ENABLED_changed(() => {
+            if (this._settings.window_border.ENABLED)
+                this._window_border.enable();
+            else
+                this._window_border.disable();
+        });
+
+        // border look changed
+        [
+            'WIDTH', 'COLOR', 'CORNER_RADIUS', 'SHOW_WHEN_MAXIMIZED'
+        ].forEach(key => this._settings.window_border[`${key}_changed`](() => {
+            if (this._settings.window_border.ENABLED)
+                this._window_border.update_all();
+        }));
     }
 
     _log(str) {
