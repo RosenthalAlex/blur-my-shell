@@ -9,9 +9,6 @@ import { WindowCornersEffect } from './window_corners_effect.js';
 const BORDER_ACTOR_NAME = 'bms-window-border';
 const BLUR_ACTOR_NAME = 'bms-application-blurred-widget';
 const CORNERS_EFFECT_NAME = 'bms-window-corners';
-// width (unscaled pixels) of the band cut around each corner, outside the
-// frame, where apps may draw a square outline
-const CORNER_OUTSIDE_BAND = 4;
 
 // our own actors inside a window actor; anything else is the window content
 const BMS_ACTOR_NAMES = [BORDER_ACTOR_NAME, BLUR_ACTOR_NAME];
@@ -261,11 +258,7 @@ export const WindowBorder = class WindowBorder {
 
         const x = shape.x - content.x;
         const y = shape.y - content.y;
-        effect.set_shape(
-            [x, y, x + shape.width, y + shape.height],
-            scaled_radius,
-            CORNER_OUTSIDE_BAND * theme_scale
-        );
+        effect.set_shape([x, y, x + shape.width, y + shape.height], scaled_radius);
     }
 
     remove_corners(meta_window) {
