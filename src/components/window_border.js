@@ -181,9 +181,14 @@ export const WindowBorder = class WindowBorder {
             return;
         }
 
-        let radius = shape.radius ?? prefs.CORNER_RADIUS;
-        if (is_maximized)
-            radius = 0;
+        // a blurred window gives its blur's radius, which already accounts for
+        // maximized/fullscreen windows (and for Rounded Window Corners)
+        let radius = shape.radius;
+        if (radius === undefined) {
+            radius = is_maximized && !this.settings.applications.CORNER_WHEN_MAXIMIZED
+                ? 0
+                : prefs.CORNER_RADIUS;
+        }
 
         border.set_position(shape.x, shape.y);
         border.set_size(shape.width, shape.height);

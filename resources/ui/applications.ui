@@ -283,7 +283,7 @@ This may cause some latency or performance issues.</property>
         <child>
           <object class="AdwActionRow">
             <property name="title" translatable="yes">Show on maximized and fullscreen</property>
-            <property name="subtitle" translatable="yes">Keep the border (with square corners) on maximized and fullscreen windows.</property>
+            <property name="subtitle" translatable="yes">Keep the border on maximized and fullscreen windows. Its corners are rounded when “Enable corner rounding on maximized and fullscreen” is on.</property>
             <property name="activatable-widget">window_border_show_when_maximized</property>
             <property name="sensitive" bind-source="window_border" bind-property="state" bind-flags="sync-create" />
 
