@@ -81,7 +81,9 @@ export default class BlurMyShell extends Extension {
 
         // enable the lockscreen blur, only one important in both `user` session and `unlock-dialog`
         if (this._settings.lockscreen.BLUR && !this._lockscreen_blur.enabled)
-            this._lockscreen_blur.enable();
+            this._run_component_step(
+                '_lockscreen_blur enable', () => this._lockscreen_blur.enable()
+            );
 
         // update whether or not the active blur effect supports rounded corners
         this._update_rounded_blur_found();
@@ -164,11 +166,13 @@ export default class BlurMyShell extends Extension {
         // disable every component from user session mode
         if (this._user_session_mode_enabled)
             this._disable_user_session();
-        this._overview_blur.restore_patched_proto();
+        this._run_component_step(
+            '_overview_blur restore', () => this._overview_blur.restore_patched_proto()
+        );
 
         // disable components that stay active outside the user session
-        this._popup.disable();
-        this._lockscreen_blur.disable();
+        this._run_component_step('_popup disable', () => this._popup.disable());
+        this._run_component_step('_lockscreen_blur disable', () => this._lockscreen_blur.disable());
 
         // untrack them
         this._panel_blur = null;
@@ -212,14 +216,14 @@ export default class BlurMyShell extends Extension {
         this._log("disabling user session mode...");
 
         // disable every component except lockscreen blur and popup blur
-        this._panel_blur.disable();
-        this._dash_to_dock_blur.disable();
-        this._overview_blur.disable();
-        this._appfolder_blur.disable();
-        this._window_list_blur.disable();
-        this._coverflow_alt_tab_blur.disable();
-        this._applications_blur.disable();
-        this._screenshot_blur.disable();
+        this._run_component_step('_panel_blur disable', () => this._panel_blur.disable());
+        this._run_component_step('_dash_to_dock_blur disable', () => this._dash_to_dock_blur.disable());
+        this._run_component_step('_overview_blur disable', () => this._overview_blur.disable());
+        this._run_component_step('_appfolder_blur disable', () => this._appfolder_blur.disable());
+        this._run_component_step('_window_list_blur disable', () => this._window_list_blur.disable());
+        this._run_component_step('_coverflow_alt_tab_blur disable', () => this._coverflow_alt_tab_blur.disable());
+        this._run_component_step('_applications_blur disable', () => this._applications_blur.disable());
+        this._run_component_step('_screenshot_blur disable', () => this._screenshot_blur.disable());
 
         // remove the clipped redraws flag
         this._reenable_clipped_redraws();
@@ -302,37 +306,49 @@ export default class BlurMyShell extends Extension {
             );
     }
 
+    /// Runs one component's enable/disable step. An exception thrown out of the extension's
+    /// `enable`/`disable` makes GNOME Shell put the whole extension in an error state, and aborts
+    /// every step after it (leaving other components half set up or never cleaned up). Log the
+    /// failure instead, and carry on with the other components.
+    _run_component_step(name, step) {
+        try {
+            step();
+        } catch (e) {
+            console.error(`[Blur my Shell] ${name} failed:`, e);
+        }
+    }
+
     /// Enables every component from the user session needed, should be called when the shell is
     /// entirely loaded as the `enable` methods interact with it.
     _enable_components() {
         // enable each component if needed, and if it is not already enabled
 
         if (this._settings.panel.BLUR && !this._panel_blur.enabled)
-            this._panel_blur.enable();
+            this._run_component_step('_panel_blur enable', () => this._panel_blur.enable());
 
         if (this._settings.dash_to_dock.BLUR && !this._dash_to_dock_blur.enabled)
-            this._dash_to_dock_blur.enable();
+            this._run_component_step('_dash_to_dock_blur enable', () => this._dash_to_dock_blur.enable());
 
         if (this._settings.overview.BLUR && !this._overview_blur.enabled)
-            this._overview_blur.enable();
+            this._run_component_step('_overview_blur enable', () => this._overview_blur.enable());
 
         if (this._settings.appfolder.BLUR)
-            this._appfolder_blur.enable();
+            this._run_component_step('_appfolder_blur enable', () => this._appfolder_blur.enable());
 
         if (this._settings.applications.BLUR)
-            this._applications_blur.enable();
+            this._run_component_step('_applications_blur enable', () => this._applications_blur.enable());
 
         if (this._settings.window_list.BLUR)
-            this._window_list_blur.enable();
+            this._run_component_step('_window_list_blur enable', () => this._window_list_blur.enable());
 
         if (this._settings.coverflow_alt_tab.BLUR)
-            this._coverflow_alt_tab_blur.enable();
+            this._run_component_step('_coverflow_alt_tab_blur enable', () => this._coverflow_alt_tab_blur.enable());
 
         if (this._settings.screenshot.BLUR)
-            this._screenshot_blur.enable();
+            this._run_component_step('_screenshot_blur enable', () => this._screenshot_blur.enable());
 
         if (this._settings.popup.BLUR)
-            this._popup.enable();
+            this._run_component_step('_popup enable', () => this._popup.enable());
 
         this._log("all components enabled.");
     }
